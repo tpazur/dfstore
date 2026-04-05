@@ -1,3 +1,11 @@
+main stage
+user defined stage
+
+Make pyvenvs with multiple mpoy versions 3.9 - 3.14
+And different versions of pandas and polars
+
+Remote server. Remote central v2. 
+
 # Give the functions a format parameter. Able to return a dataframe
 # Add version notes in dropdown GUI 
 # Create Readme.md 
