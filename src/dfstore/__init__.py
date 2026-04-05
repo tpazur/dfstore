@@ -1,6 +1,13 @@
 """dfstore — public API."""
 from __future__ import annotations
 
+from importlib.metadata import version, PackageNotFoundError
+
+try:
+    __version__ = version("dfstore")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
+
 import builtins
 import os
 from pathlib import Path

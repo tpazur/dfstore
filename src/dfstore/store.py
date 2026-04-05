@@ -20,6 +20,7 @@ _NAME_RE = re.compile(r"^[a-zA-Z0-9_\-]{1,128}$")
 
 
 def _validate_name(name: str) -> None:
+    """Raise ``ValueError`` if *name* does not match the allowed pattern."""
     if not _NAME_RE.match(name):
         raise ValueError(
             f"Invalid name {name!r}. Names must match ^[a-zA-Z0-9_\\-]{{1,128}}$"
@@ -27,10 +28,12 @@ def _validate_name(name: str) -> None:
 
 
 def _now() -> datetime:
+    """Return the current UTC datetime."""
     return datetime.now(tz=timezone.utc)
 
 
 def _detect_library(df: object) -> str:
+    """Return ``'pandas'`` or ``'polars'`` based on the type of *df*."""
     if isinstance(df, pd.DataFrame):
         return "pandas"
     if isinstance(df, pl.DataFrame):
@@ -39,7 +42,24 @@ def _detect_library(df: object) -> str:
 
 
 class DFStore:
+    """Local DataFrame store backed by Parquet files and a JSON metadata index.
+
+    All DataFrames are saved under *store_path* with the structure::
+
+        store_path/
+          index.json          ← metadata for all DataFrames
+          data/
+            <name>/
+              v1.parquet
+              v2.parquet
+              …
+
+    Every call to :meth:`save` creates a new versioned Parquet file and
+    updates the metadata index atomically.
+    """
+
     def __init__(self, store_path: Path) -> None:
+        """Initialise the store at *store_path* (directory need not exist yet)."""
         self._store_path = store_path
         self._index = MetadataIndex(store_path)
 
@@ -55,6 +75,26 @@ class DFStore:
         *,
         _now_fn=_now,
     ) -> VersionRecord:
+        """Save *df* under *name* and return the new :class:`VersionRecord`.
+
+        If *name* does not exist, a new record is created (version 1).
+        If it already exists, a new version is appended with a diff against
+        the previous version.
+
+        Args:
+            df: A pandas or polars DataFrame to store.
+            name: Unique identifier (alphanumeric, ``_``, ``-``, max 128 chars).
+            description: Human-readable description of the dataset.
+            tags: List of plain strings or ``{"key": "value"}`` dicts.
+            notes: Free-text note describing what changed in this version.
+
+        Returns:
+            The :class:`VersionRecord` created for this save.
+
+        Raises:
+            ValueError: If *name* contains invalid characters.
+            DFStoreError: If *name* is currently soft-deleted.
+        """
         _validate_name(name)
         library = _detect_library(df)
         meta = compute_metadata(df)
@@ -148,6 +188,18 @@ class DFStore:
         version: int | None = None,
         as_library: Literal["pandas", "polars"] | None = None,
     ) -> pd.DataFrame | pl.DataFrame:
+        """Retrieve a stored DataFrame by name and optional version.
+
+        Args:
+            name: The DataFrame name.
+            version: Version number to retrieve; defaults to the latest version.
+            as_library: Return as ``'pandas'`` or ``'polars'``; defaults to the
+                library used when the version was saved.
+
+        Raises:
+            DFNotFoundError: If *name* does not exist or is soft-deleted.
+            ValueError: If *version* is out of range.
+        """
         _validate_name(name)
         records = self._index.load()
 
@@ -175,6 +227,13 @@ class DFStore:
         include_deleted: bool = False,
         format: Literal["pd", "raw"] = "pd",
     ) -> builtins.list[DFRecord] | pd.DataFrame:
+        """Return all stored DataFrames, sorted by most-recently-updated first.
+
+        Args:
+            include_deleted: If ``True``, soft-deleted records are included.
+            format: ``'raw'`` returns a list of :class:`DFRecord`; ``'pd'``
+                returns a pandas DataFrame summary.
+        """
         records = self._index.load()
         result = [
             r for r in records.values()
@@ -192,6 +251,16 @@ class DFStore:
         name: str,
         format: Literal["pd", "raw"] = "pd",
     ) -> DFRecord | pd.DataFrame:
+        """Return the full metadata record for *name*.
+
+        Args:
+            name: The DataFrame name.
+            format: ``'raw'`` returns a :class:`DFRecord`; ``'pd'`` returns a
+                single-row pandas DataFrame.
+
+        Raises:
+            DFNotFoundError: If *name* does not exist in the store.
+        """
         _validate_name(name)
         records = self._index.load()
         if name not in records:
@@ -210,6 +279,21 @@ class DFStore:
         columns: builtins.list[str] | None = None,
         format: Literal["pd", "raw"] = "pd",
     ) -> builtins.list[DFRecord] | pd.DataFrame:
+        """Search active DataFrames by description substring, tags, or column names.
+
+        All provided criteria are ANDed together. At least one must be given.
+
+        Args:
+            description: Case-insensitive substring to match against each record's
+                description.
+            tags: Tags that must all be present on a record.
+            columns: Column names that must all be present in the current version.
+            format: ``'raw'`` returns a list of :class:`DFRecord`; ``'pd'`` returns
+                a pandas DataFrame.
+
+        Raises:
+            ValueError: If no search criteria are provided.
+        """
         if description is None and tags is None and columns is None:
             raise ValueError("At least one search criterion must be provided.")
 
@@ -236,6 +320,16 @@ class DFStore:
         name: str,
         format: Literal["pd", "raw"] = "pd",
     ) -> builtins.list[VersionRecord] | pd.DataFrame:
+        """Return all version records for *name* in chronological order.
+
+        Args:
+            name: The DataFrame name.
+            format: ``'raw'`` returns a list of :class:`VersionRecord`; ``'pd'``
+                returns a pandas DataFrame.
+
+        Raises:
+            DFNotFoundError: If *name* does not exist in the store.
+        """
         _validate_name(name)
         records = self._index.load()
         if name not in records:
@@ -248,6 +342,18 @@ class DFStore:
     # ── delete ────────────────────────────────────────────────────────────────
 
     def delete(self, name: str, hard: bool = False) -> None:
+        """Delete a stored DataFrame.
+
+        Args:
+            name: The DataFrame name.
+            hard: If ``False`` (default), marks the record as deleted but keeps
+                all data on disk. If ``True``, removes the metadata entry and
+                deletes the entire ``data/<name>/`` directory permanently.
+
+        Raises:
+            DFNotFoundError: If *name* does not exist.
+            DFStoreError: If attempting a soft-delete on an already-deleted record.
+        """
         _validate_name(name)
         records = self._index.load()
         if name not in records:
@@ -314,6 +420,12 @@ class DFStore:
     # ── restore ───────────────────────────────────────────────────────────────
 
     def restore(self, name: str) -> None:
+        """Restore a soft-deleted DataFrame, making it active again.
+
+        Raises:
+            DFNotFoundError: If *name* does not exist in the store.
+            DFStoreError: If *name* is not currently soft-deleted.
+        """
         _validate_name(name)
         records = self._index.load()
         if name not in records:
@@ -330,6 +442,7 @@ def _tags_match(
     record_tags: builtins.list[str | dict[str, str]],
     query_tags: builtins.list[str | dict[str, str]],
 ) -> bool:
+    """Return ``True`` if all *query_tags* are present in *record_tags*."""
     for qt in query_tags:
         if isinstance(qt, str):
             if qt not in record_tags:
@@ -345,12 +458,14 @@ def _tags_match(
 
 
 def _columns_match(record: DFRecord, columns: builtins.list[str]) -> bool:
+    """Return ``True`` if all *columns* are present in the current version of *record*."""
     current_version = record.versions[record.current_version - 1]
     current_cols = builtins.set(current_version.columns)
     return all(c in current_cols for c in columns)
 
 
 def _records_to_df(records: builtins.list[DFRecord]) -> pd.DataFrame:
+    """Convert a list of :class:`DFRecord` objects to a summary pandas DataFrame."""
     rows = [
         {
             "name": r.name,
@@ -367,6 +482,7 @@ def _records_to_df(records: builtins.list[DFRecord]) -> pd.DataFrame:
 
 
 def _versions_to_df(versions: builtins.list[VersionRecord]) -> pd.DataFrame:
+    """Convert a list of :class:`VersionRecord` objects to a pandas DataFrame."""
     rows = [
         {
             "version": v.version,

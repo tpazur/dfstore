@@ -9,6 +9,7 @@ import pyarrow.parquet as pq
 
 
 def write_parquet(df: pd.DataFrame | pl.DataFrame, path: Path) -> None:
+    """Write *df* to *path* as a Parquet file, creating parent directories as needed."""
     path.parent.mkdir(parents=True, exist_ok=True)
     if isinstance(df, pd.DataFrame):
         df.to_parquet(path, index=False)
@@ -19,6 +20,7 @@ def write_parquet(df: pd.DataFrame | pl.DataFrame, path: Path) -> None:
 
 
 def read_parquet(path: Path, library: str) -> pd.DataFrame | pl.DataFrame:
+    """Read a Parquet file and return a DataFrame in the requested *library*."""
     if library == "pandas":
         return pd.read_parquet(path)
     elif library == "polars":
@@ -38,6 +40,7 @@ def compute_metadata(df: pd.DataFrame | pl.DataFrame) -> dict:
 
 
 def _metadata_pandas(df: pd.DataFrame) -> dict:
+    """Extract shape, columns, dtypes, null counts, and describe stats from a pandas DataFrame."""
     shape = tuple(df.shape)
     columns = list(df.columns)
     dtypes = {col: str(dtype) for col, dtype in df.dtypes.items()}
@@ -60,6 +63,7 @@ def _metadata_pandas(df: pd.DataFrame) -> dict:
 
 
 def _metadata_polars(df: pl.DataFrame) -> dict:
+    """Extract shape, columns, dtypes, null counts, and describe stats from a polars DataFrame."""
     shape = tuple(df.shape)
     columns = list(df.columns)
     dtypes = {col: str(dtype) for col, dtype in zip(df.columns, df.dtypes)}

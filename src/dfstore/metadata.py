@@ -10,7 +10,7 @@ from .models import DFRecord, VersionRecord
 
 
 def _parse_dt(s: str) -> datetime:
-    # Support both with and without microseconds
+    """Parse an ISO 8601 UTC datetime string, with or without microseconds."""
     for fmt in ("%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ"):
         try:
             return datetime.strptime(s, fmt).replace(tzinfo=timezone.utc)
@@ -20,12 +20,14 @@ def _parse_dt(s: str) -> datetime:
 
 
 def _fmt_dt(dt: datetime) -> str:
+    """Format a datetime as an ISO 8601 UTC string with microseconds."""
     if dt.tzinfo is not None:
         dt = dt.astimezone(timezone.utc)
     return dt.strftime("%Y-%m-%dT%H:%M:%S.%f") + "Z"
 
 
 def _version_to_dict(v: VersionRecord) -> dict:
+    """Serialize a ``VersionRecord`` to a JSON-compatible dict."""
     return {
         "version": v.version,
         "saved_at": _fmt_dt(v.saved_at),
@@ -45,6 +47,7 @@ def _version_to_dict(v: VersionRecord) -> dict:
 
 
 def _version_from_dict(d: dict) -> VersionRecord:
+    """Deserialize a dict (from ``index.json``) into a ``VersionRecord``."""
     return VersionRecord(
         version=d["version"],
         saved_at=_parse_dt(d["saved_at"]),
@@ -64,6 +67,7 @@ def _version_from_dict(d: dict) -> VersionRecord:
 
 
 def _record_to_dict(r: DFRecord) -> dict:
+    """Serialize a ``DFRecord`` (and all its versions) to a JSON-compatible dict."""
     return {
         "name": r.name,
         "description": r.description,
@@ -77,6 +81,7 @@ def _record_to_dict(r: DFRecord) -> dict:
 
 
 def _record_from_dict(d: dict) -> DFRecord:
+    """Deserialize a dict (from ``index.json``) into a ``DFRecord``."""
     return DFRecord(
         name=d["name"],
         description=d["description"],
@@ -90,11 +95,22 @@ def _record_from_dict(d: dict) -> DFRecord:
 
 
 class MetadataIndex:
+    """Manages the ``index.json`` file that persists all ``DFRecord`` metadata.
+
+    Reads and writes are atomic: saves go to a ``.tmp`` file first, then
+    ``os.replace`` swaps it in, so a crash mid-write never corrupts the index.
+    """
+
     def __init__(self, store_path: Path) -> None:
+        """Initialise the index for the given store root directory."""
         self._store_path = store_path
         self._index_path = store_path / "index.json"
 
     def load(self) -> dict[str, DFRecord]:
+        """Load and return all records from ``index.json``.
+
+        Returns an empty dict if the index file does not yet exist.
+        """
         if not self._index_path.exists():
             return {}
         with open(self._index_path, encoding="utf-8") as f:
@@ -102,6 +118,11 @@ class MetadataIndex:
         return {name: _record_from_dict(data) for name, data in raw.items()}
 
     def save(self, records: dict[str, DFRecord]) -> None:
+        """Atomically persist *records* to ``index.json``.
+
+        Writes to a temporary file first, then atomically replaces the index
+        so the file is never left in a partially-written state.
+        """
         self._store_path.mkdir(parents=True, exist_ok=True)
         raw = {name: _record_to_dict(record) for name, record in records.items()}
         tmp = self._index_path.with_suffix(".json.tmp")
