@@ -62,6 +62,8 @@ dfstore serve --port 8080 --host 0.0.0.0
 
 Four tabs: **Browse** (filter, click a row to see version history and a data preview), **Save** (upload CSV/Parquet), **Search** (by description, tags, or column names), **Manage** (soft/hard delete and restore).
 
+![dfstore web UI](docs/screenshot.png)
+
 ## Features
 
 - **Versioned** — every save creates a new version; old versions are always accessible
