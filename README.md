@@ -64,6 +64,12 @@ Four tabs: **Browse** (filter, click a row to see version history and a data pre
 
 ![dfstore web UI](docs/screenshot.png)
 
+## Support
+
+I'm building dfstore with passion in my free time. If you find it useful, consider buying me a coffee!
+
+[![Buy Me a Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/tpazur)
+
 ## Features
 
 - **Versioned** — every save creates a new version; old versions are always accessible
