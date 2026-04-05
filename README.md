@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/tpazur/dfstore/actions/workflows/ci.yml/badge.svg)](https://github.com/tpazur/dfstore/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/dfstore)](https://pypi.org/project/dfstore/)
-[![Python](https://img.shields.io/pypi/pyversions/dfstore)](https://pypi.org/project/dfstore/)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://pypi.org/project/dfstore/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A lightweight DataFrame storage library with rich metadata. Save, version, and retrieve pandas and polars DataFrames from a local store — via Python, CLI, or a web UI.
