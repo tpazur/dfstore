@@ -18,6 +18,10 @@ dependencies = [
 
 [project.optional-dependencies]
 gui = ["flask>=3.0"]
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+]
 
 [project.scripts]
 dfstore = "dfstore.cli:app"

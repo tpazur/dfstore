@@ -1,0 +1,52 @@
+site_name: dfstore
+site_description: Centralized DataFrame Storage — save, version, and retrieve pandas and polars DataFrames.
+site_url: https://tpazur.github.io/dfstore
+repo_url: https://github.com/tpazur/dfstore
+repo_name: tpazur/dfstore
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Features:
+      - Save & Versioning: features/save.md
+      - Load Data: features/get.md
+      - List & Search: features/list-search.md
+      - Inspect Metadata: features/info.md
+      - Delete & Restore: features/delete-restore.md
+      - Web UI: features/web-ui.md
+  - CLI Reference: cli.md
+  - Configuration: configuration.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
