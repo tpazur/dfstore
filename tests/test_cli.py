@@ -101,7 +101,7 @@ def test_cli_delete_soft_sets_deleted(store_env, employees_df):
     dfstore.save(employees_df, name="employees", store_path=store_env)
     result = runner.invoke(app, ["delete", "employees"])
     assert result.exit_code == 0
-    r = dfstore.info("employees", store_path=store_env)
+    r = dfstore.info("employees", store_path=store_env, format="raw")
     assert r.deleted is True
 
 
@@ -109,7 +109,7 @@ def test_cli_delete_hard_with_confirmation_removes_record(store_env, employees_d
     dfstore.save(employees_df, name="employees", store_path=store_env)
     result = runner.invoke(app, ["delete", "employees", "--hard"], input="y\n")
     assert result.exit_code == 0
-    assert dfstore.list(include_deleted=True, store_path=store_env) == []
+    assert len(dfstore.list(include_deleted=True, store_path=store_env)) == 0
 
 
 def test_cli_restore_makes_record_active(store_env, employees_df):
@@ -117,7 +117,7 @@ def test_cli_restore_makes_record_active(store_env, employees_df):
     dfstore.delete("employees", store_path=store_env)
     result = runner.invoke(app, ["restore", "employees"])
     assert result.exit_code == 0
-    r = dfstore.info("employees", store_path=store_env)
+    r = dfstore.info("employees", store_path=store_env, format="raw")
     assert r.deleted is False
 
 

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "dfstore"
 version = "0.1.0"
-description = "Centralized DataFrame storage for solo data scientists"
+description = "Centralized DataFrame Storage"
 license = { text = "MIT" }
 requires-python = ">=3.11"
 dependencies = [
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-gui = ["gradio>=4.0"]
+gui = ["flask>=3.0"]
 
 [project.scripts]
 dfstore = "dfstore.cli:app"

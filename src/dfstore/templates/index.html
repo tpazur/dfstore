@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>dfstore</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f9fb;
+      --surface: #ffffff;
+      --border: #e4e7ec;
+      --border-light: #f1f3f7;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --text-subtle: #9ca3af;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --danger-light: #fef2f2;
+      --success: #16a34a;
+      --success-light: #f0fdf4;
+      --warning-light: #fefce8;
+      --radius: 8px;
+      --radius-sm: 5px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+      --shadow: 0 4px 12px rgba(0,0,0,.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* ── Layout ── */
+    .app-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .top-bar-inner {
+      max-width: 1080px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      height: 52px;
+    }
+
+    .logo {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+
+    .logo-icon {
+      width: 26px;
+      height: 26px;
+      background: var(--primary);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    /* ── Nav tabs ── */
+    .nav {
+      display: flex;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .nav-btn {
+      padding: 6px 14px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      transition: background .12s, color .12s;
+    }
+    .nav-btn:hover:not(.active) { background: var(--bg); color: var(--text); }
+    .nav-btn.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* ── Main content ── */
+    .main {
+      flex: 1;
+      max-width: 1080px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 28px 24px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .card-body {
+      padding: 18px;
+    }
+
+    /* ── Forms ── */
+    .form-group { margin-bottom: 14px; }
+    .form-group:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-bottom: 5px;
+    }
+
+    input[type="text"],
+    input[type="file"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px 11px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--surface);
+      color: var(--text);
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79,70,229,.12);
+    }
+
+    input::placeholder { color: var(--text-subtle); }
+
+    .row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+    .row .form-group { flex: 1; min-width: 160px; }
+
+    /* ── File drop zone ── */
+    .file-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 22px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      position: relative;
+    }
+    .file-zone:hover { border-color: var(--primary); background: var(--primary-light); }
+    .file-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+      width: 100%; height: 100%;
+    }
+    .file-zone-icon { font-size: 22px; margin-bottom: 6px; }
+    .file-zone-text { color: var(--text-muted); font-size: 13px; }
+    .file-zone-name { font-weight: 600; color: var(--primary); font-size: 13px; margin-top: 4px; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 500;
+      font-family: inherit;
+      transition: background .12s, opacity .12s;
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-danger  { background: var(--danger); color: #fff; }
+    .btn-danger:hover:not(:disabled)  { background: var(--danger-hover); }
+    .btn-ghost {
+      background: none;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover:not(:disabled) { background: var(--bg); color: var(--text); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── Toolbar row above tables ── */
+    .toolbar {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .toolbar .form-group { margin-bottom: 0; }
+    .toolbar .form-group.grow { flex: 1; min-width: 180px; }
+
+    /* ── Inline checkbox ── */
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 0;
+    }
+    .check-row input[type="checkbox"] {
+      width: 15px; height: 15px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+    .check-row label {
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      font-size: 13.5px;
+      color: var(--text);
+      margin: 0;
+      cursor: pointer;
+    }
+
+    /* ── Tables ── */
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: var(--bg);
+      text-align: left;
+      padding: 9px 14px;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+      font-size: 13.5px;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover td { background: var(--bg); }
+    tr.selected td { background: var(--primary-light); }
+
+    .df-name { font-weight: 600; color: var(--text); font-family: "SF Mono", ui-monospace, monospace; font-size: 13px; }
+    .shape-cell { white-space: nowrap; color: var(--text-muted); font-size: 12.5px; font-family: ui-monospace, monospace; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 11.5px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-deleted  { background: var(--danger-light);  color: var(--danger); }
+    .badge-active   { background: var(--success-light); color: var(--success); }
+    .badge-version  { background: var(--primary-light); color: var(--primary); }
+
+    .tag-pill {
+      display: inline-block;
+      padding: 1px 7px;
+      background: var(--border-light);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin: 1px;
+    }
+
+    /* ── Status messages ── */
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+    }
+    .status.ok  {
+      background: var(--success-light);
+      color: var(--success);
+      border: 1px solid #bbf7d0;
+    }
+    .status.err {
+      background: var(--danger-light);
+      color: var(--danger);
+      border: 1px solid #fecaca;
+    }
+
+    /* ── Section title ── */
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+      margin: 24px 0 12px;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--text-subtle);
+      font-style: italic;
+      padding: 32px 14px;
+      font-size: 13px;
+    }
+
+    /* ── Manage action groups ── */
+    .action-block {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .action-block-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+      min-width: 0;
+    }
+    .action-block-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    /* ── Preview table ── */
+    .preview-table th {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 7px 12px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .preview-table td {
+      font-size: 12.5px;
+      font-family: ui-monospace, "SF Mono", monospace;
+      padding: 6px 12px;
+      color: var(--text);
+      border-bottom: 1px solid var(--border-light);
+      white-space: nowrap;
+    }
+    .preview-table tbody tr:last-child td { border-bottom: none; }
+    .preview-table td.null-cell { color: var(--text-subtle); font-style: italic; }
+
+    /* ── Browse toolbar ── */
+    .browse-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .browse-toolbar input[type="text"] {
+      flex: 1;
+      max-width: 380px;
+      min-width: 0;
+    }
+    .browse-toolbar .btn { margin-left: auto; flex-shrink: 0; }
+
+    /* ── Loading spinner ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      opacity: .7;
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell" id="app">
+
+  <header class="top-bar">
+    <div class="top-bar-inner">
+      <div class="logo">
+        <div class="logo-icon">df</div>
+        dfstore
+      </div>
+      <nav class="nav">
+        <button class="nav-btn" :class="{active: tab==='browse'}" @click="tab='browse'">Browse</button>
+        <button class="nav-btn" :class="{active: tab==='save'}"   @click="tab='save'">Save</button>
+        <button class="nav-btn" :class="{active: tab==='search'}" @click="tab='search'">Search</button>
+        <button class="nav-btn" :class="{active: tab==='manage'}" @click="tab='manage'">Manage</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ── Browse ── -->
+    <div v-show="tab==='browse'">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">DataFrames</span>
+        </div>
+        <div class="browse-toolbar">
+          <input type="text" v-model="br.q" @input="brFetch" placeholder="Filter by name or description…">
+          <div class="check-row" style="padding:0;flex-shrink:0">
+            <input type="checkbox" id="brDeleted" v-model="br.includeDeleted" @change="brFetch">
+            <label for="brDeleted">Include deleted</label>
+          </div>
+          <button class="btn btn-ghost" @click="brFetch" :disabled="br.loading">
+            <span v-if="br.loading" class="spinner"></span>
+            <span v-else>↺</span>
+            Refresh
+          </button>
+        </div>
+
+        <div class="table-wrap">
+          <table v-if="br.records.length">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Tags</th>
+                <th>Version</th>
+                <th>Shape</th>
+                <th>Updated</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="r in br.records" :key="r.name"
+                class="clickable"
+                :class="{selected: br.selected && br.selected.name === r.name}"
+                @click="brSelect(r)"
+              >
+                <td><span class="df-name">{{ r.name }}</span></td>
+                <td style="color:var(--text-muted);max-width:260px">{{ r.description }}</td>
+                <td>
+                  <template v-if="r.tags_display">
+                    <span v-for="tag in r.tags_display.split(', ')" :key="tag" class="tag-pill">{{ tag }}</span>
+                  </template>
+                  <span v-else style="color:var(--text-subtle)">—</span>
+                </td>
+                <td><span class="badge badge-version">v{{ r.current_version }}</span></td>
+                <td class="shape-cell">{{ brShape(r) }}</td>
+                <td style="color:var(--text-muted);white-space:nowrap">{{ brDate(r.updated_at) }}</td>
+                <td>
+                  <span class="badge" :class="r.deleted ? 'badge-deleted' : 'badge-active'">
+                    {{ r.deleted ? 'Deleted' : 'Active' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p v-else-if="!br.loading" class="empty">No DataFrames found.</p>
+          <p v-else class="empty">Loading…</p>
+        </div>
+      </div>
+
+      <template v-if="br.selected">
+        <p class="section-title">Preview — {{ br.selected.name }}</p>
+        <div class="card" style="margin-bottom:16px">
+          <div v-if="br.previewLoading" class="empty" style="display:flex;align-items:center;justify-content:center;gap:8px">
+            <span class="spinner" style="color:var(--text-subtle)"></span>
+            Loading preview…
+          </div>
+          <div v-else-if="br.previewError" class="empty" style="color:var(--danger)">{{ br.previewError }}</div>
+          <div v-else-if="br.preview" class="table-wrap">
+            <table class="preview-table">
+              <thead>
+                <tr>
+                  <th v-for="col in br.preview.columns" :key="col">{{ col }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, i) in br.preview.rows" :key="i">
+                  <td
+                    v-for="(val, j) in row" :key="j"
+                    :class="{ 'null-cell': val === null }"
+                  >{{ val === null ? 'null' : val }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <p class="section-title">Version history — {{ br.selected.name }}</p>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ver</th>
+                  <th>Saved At</th>
+                  <th>Notes</th>
+                  <th>Shape</th>
+                  <th>Row Δ</th>
+                  <th>Cols Added</th>
+                  <th>Cols Removed</th>
+                  <th>Library</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="v in br.selected.versions" :key="v.version">
+                  <td><span class="badge badge-version">v{{ v.version }}</span></td>
+                  <td style="white-space:nowrap;color:var(--text-muted)">{{ fmtDatetime(v.saved_at) }}</td>
+                  <td style="color:var(--text-muted)">{{ v.notes || '—' }}</td>
+                  <td class="shape-cell">{{ v.shape[0] }} × {{ v.shape[1] }}</td>
+                  <td style="font-family:ui-monospace,monospace;font-size:12.5px">
+                    <span v-if="v.shape_diff !== null" :style="{color: v.row_diff > 0 ? 'var(--success)' : v.row_diff < 0 ? 'var(--danger)' : 'var(--text-muted)'}">
+                      {{ v.row_diff >= 0 ? '+' : '' }}{{ v.row_diff }}
+                    </span>
+                    <span v-else style="color:var(--text-subtle)">—</span>
+                  </td>
+                  <td style="font-size:12.5px;color:var(--success)">{{ v.columns_added.length ? v.columns_added.join(', ') : '—' }}</td>
+                  <td style="font-size:12.5px;color:var(--danger)">{{ v.columns_removed.length ? v.columns_removed.join(', ') : '—' }}</td>
+                  <td style="color:var(--text-muted)">{{ v.library }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- ── Save ── -->
+    <div v-show="tab==='save'">
+      <div class="card" style="max-width:560px">
+        <div class="card-header">
+          <span class="card-title">Save DataFrame</span>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label>File <span style="color:var(--danger)">*</span></label>
+            <div class="file-zone">
+              <input type="file" accept=".csv,.parquet" @change="sv.file = $event.target.files[0]">
+              <div class="file-zone-icon">📂</div>
+              <div class="file-zone-text">Click to select a .csv or .parquet file</div>
+              <div v-if="sv.file" class="file-zone-name">{{ sv.file.name }}</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="form-group">
+              <label>Name <span style="color:var(--danger)">*</span></label>
+              <input type="text" v-model="sv.name" placeholder="e.g. sales_2024">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" v-model="sv.description" placeholder="What is this dataset?">
+          </div>
+
+          <div class="row">
+            <div class="form-group">
+              <label>Tags</label>
+              <input type="text" v-model="sv.tags" placeholder="finance, region=EU">
+            </div>
+            <div class="form-group">
+              <label>Version notes</label>
+              <input type="text" v-model="sv.notes" placeholder="What changed?">
+            </div>
+          </div>
+
+          <button class="btn btn-primary" @click="svSave" :disabled="sv.loading">
+            <span v-if="sv.loading" class="spinner"></span>
+            {{ sv.loading ? 'Saving…' : 'Save DataFrame' }}
+          </button>
+
+          <div v-if="sv.status" class="status" :class="sv.status.ok ? 'ok' : 'err'">
+            {{ sv.status.msg }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Search ── -->
+    <div v-show="tab==='search'">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header">
+          <span class="card-title">Search</span>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="form-group">
+              <label>Description contains</label>
+              <input type="text" v-model="sr.desc" placeholder="Keywords…" @keydown.enter="srSearch">
+            </div>
+            <div class="form-group">
+              <label>Tags</label>
+              <input type="text" v-model="sr.tags" placeholder="finance, region=EU" @keydown.enter="srSearch">
+            </div>
+            <div class="form-group">
+              <label>Columns</label>
+              <input type="text" v-model="sr.cols" placeholder="id, name, amount" @keydown.enter="srSearch">
+            </div>
+          </div>
+          <button class="btn btn-primary" @click="srSearch" :disabled="sr.loading">
+            <span v-if="sr.loading" class="spinner"></span>
+            {{ sr.loading ? 'Searching…' : 'Search' }}
+          </button>
+          <div v-if="sr.status" class="status" :class="sr.status.ok ? 'ok' : 'err'">{{ sr.status.msg }}</div>
+        </div>
+      </div>
+
+      <div class="card" v-if="sr.results.length">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th><th>Description</th><th>Tags</th>
+                <th>Version</th><th>Shape</th><th>Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in sr.results" :key="r.name">
+                <td><span class="df-name">{{ r.name }}</span></td>
+                <td style="color:var(--text-muted)">{{ r.description }}</td>
+                <td>
+                  <template v-if="r.tags_display">
+                    <span v-for="tag in r.tags_display.split(', ')" :key="tag" class="tag-pill">{{ tag }}</span>
+                  </template>
+                  <span v-else style="color:var(--text-subtle)">—</span>
+                </td>
+                <td><span class="badge badge-version">v{{ r.current_version }}</span></td>
+                <td class="shape-cell">{{ brShape(r) }}</td>
+                <td style="color:var(--text-muted);white-space:nowrap">{{ brDate(r.updated_at) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Manage ── -->
+    <div v-show="tab==='manage'">
+      <div class="card" style="max-width:560px">
+        <div class="card-header">
+          <span class="card-title">Manage DataFrame</span>
+          <button class="btn btn-ghost" @click="mgLoad" :disabled="mg.loading">
+            <span v-if="mg.loading" class="spinner"></span>
+            <span v-else>↺</span>
+            Refresh
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label>Select DataFrame</label>
+            <select v-model="mg.name">
+              <option value="" disabled>— choose —</option>
+              <option v-for="n in mg.names" :key="n" :value="n">{{ n }}</option>
+            </select>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <div class="action-block">
+              <div style="flex:1">
+                <div class="action-block-label">Soft Delete</div>
+                <div class="action-block-desc">Hides the DataFrame; can be restored later</div>
+                <div class="check-row" style="padding:6px 0 0">
+                  <input type="checkbox" id="mgSoftChk" v-model="mg.softConfirm">
+                  <label for="mgSoftChk">I understand this will hide the DataFrame</label>
+                </div>
+              </div>
+              <button class="btn btn-ghost" @click="mgSoftDelete" :disabled="!mg.name || !mg.softConfirm || mg.loading">
+                Soft Delete
+              </button>
+            </div>
+
+            <div class="action-block" style="border-color:#fecaca">
+              <div style="flex:1">
+                <div class="action-block-label" style="color:var(--danger)">Hard Delete</div>
+                <div class="action-block-desc">Permanently removes all data — cannot be undone</div>
+                <div class="check-row" style="padding:6px 0 0">
+                  <input type="checkbox" id="mgHardChk" v-model="mg.hardConfirm">
+                  <label for="mgHardChk">I understand this is permanent and irreversible</label>
+                </div>
+              </div>
+              <button class="btn btn-danger" @click="mgHardDelete" :disabled="!mg.name || !mg.hardConfirm || mg.loading">
+                Hard Delete
+              </button>
+            </div>
+
+            <div class="action-block">
+              <div style="flex:1">
+                <div class="action-block-label">Restore</div>
+                <div class="action-block-desc">Unhides a soft-deleted DataFrame</div>
+              </div>
+              <button class="btn btn-ghost" @click="mgRestore" :disabled="!mg.name || mg.loading">
+                Restore
+              </button>
+            </div>
+          </div>
+
+          <div v-if="mg.status" class="status" :class="mg.status.ok ? 'ok' : 'err'">{{ mg.status.msg }}</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const { createApp, ref, reactive, onMounted } = Vue
+
+createApp({
+  setup() {
+    const tab = ref('browse')
+
+    // ── Browse ──────────────────────────────────────────────────────────────
+    const br = reactive({
+      records: [], q: '', includeDeleted: false, selected: null, loading: false,
+      preview: null, previewLoading: false, previewError: null,
+    })
+
+    async function brFetch() {
+      br.loading = true
+      const params = new URLSearchParams({ include_deleted: br.includeDeleted, q: br.q })
+      try {
+        const res = await fetch(`/api/dataframes?${params}`)
+        br.records = await res.json()
+        if (br.selected) {
+          br.selected = br.records.find(r => r.name === br.selected.name) || null
+        }
+      } catch { br.records = [] }
+      br.loading = false
+    }
+
+    async function brSelect(r) {
+      if (br.selected?.name === r.name) {
+        br.selected = null
+        br.preview = null
+        br.previewError = null
+        return
+      }
+      br.selected = r
+      br.preview = null
+      br.previewError = null
+      br.previewLoading = true
+      try {
+        const res = await fetch(`/api/dataframes/${encodeURIComponent(r.name)}/preview`)
+        const data = await res.json()
+        if (res.ok) br.preview = data
+        else br.previewError = data.error
+      } catch (e) { br.previewError = String(e) }
+      br.previewLoading = false
+    }
+
+    function brShape(r) {
+      const v = r.versions[r.current_version - 1]
+      return v ? `${v.shape[0]} × ${v.shape[1]}` : '—'
+    }
+
+    function brDate(iso) {
+      return new Date(iso).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+    }
+
+    function fmtDatetime(iso) {
+      return new Date(iso).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium' })
+    }
+
+    onMounted(brFetch)
+
+    // ── Save ────────────────────────────────────────────────────────────────
+    const sv = reactive({ file: null, name: '', description: '', tags: '', notes: '', status: null, loading: false })
+
+    async function svSave() {
+      if (!sv.name.trim()) { sv.status = { ok: false, msg: 'Name is required.' }; return }
+      if (!sv.file) { sv.status = { ok: false, msg: 'Please select a file.' }; return }
+      sv.loading = true
+      sv.status = null
+      const fd = new FormData()
+      fd.append('file', sv.file)
+      fd.append('name', sv.name.trim())
+      fd.append('description', sv.description)
+      fd.append('tags', sv.tags)
+      fd.append('notes', sv.notes)
+      try {
+        const res = await fetch('/api/dataframes', { method: 'POST', body: fd })
+        const data = await res.json()
+        if (res.ok) sv.status = { ok: true, msg: data.message }
+        else sv.status = { ok: false, msg: data.error }
+      } catch (e) { sv.status = { ok: false, msg: String(e) } }
+      sv.loading = false
+    }
+
+    // ── Search ──────────────────────────────────────────────────────────────
+    const sr = reactive({ desc: '', tags: '', cols: '', results: [], status: null, loading: false })
+
+    async function srSearch() {
+      if (!sr.desc && !sr.tags && !sr.cols) {
+        sr.status = { ok: false, msg: 'Provide at least one search criterion.' }; return
+      }
+      sr.loading = true
+      sr.status = null
+      const params = new URLSearchParams()
+      if (sr.desc) params.set('description', sr.desc)
+      if (sr.tags) params.set('tags', sr.tags)
+      if (sr.cols) params.set('columns', sr.cols)
+      try {
+        const res = await fetch(`/api/search?${params}`)
+        const data = await res.json()
+        if (res.ok) {
+          sr.results = data
+          sr.status = data.length ? { ok: true, msg: `${data.length} result(s) found.` } : { ok: false, msg: 'No results found.' }
+        } else {
+          sr.results = []
+          sr.status = { ok: false, msg: data.error }
+        }
+      } catch (e) { sr.status = { ok: false, msg: String(e) } }
+      sr.loading = false
+    }
+
+    // ── Manage ──────────────────────────────────────────────────────────────
+    const mg = reactive({ names: [], name: '', softConfirm: false, hardConfirm: false, status: null, loading: false })
+
+    async function mgLoad() {
+      mg.loading = true
+      try {
+        const res = await fetch('/api/dataframes?include_deleted=true')
+        const data = await res.json()
+        mg.names = data.map(r => r.name)
+        if (!mg.names.includes(mg.name)) mg.name = ''
+      } catch { mg.names = [] }
+      mg.loading = false
+    }
+
+    async function mgPost(url, body) {
+      mg.loading = true
+      mg.status = null
+      try {
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        const data = await res.json()
+        mg.status = { ok: res.ok, msg: res.ok ? data.message : data.error }
+        if (res.ok) { mg.softConfirm = false; mg.hardConfirm = false; await mgLoad() }
+      } catch (e) { mg.status = { ok: false, msg: String(e) } }
+      mg.loading = false
+    }
+
+    function mgSoftDelete() { mgPost(`/api/dataframes/${encodeURIComponent(mg.name)}/delete`, { hard: false }) }
+    function mgHardDelete() { mgPost(`/api/dataframes/${encodeURIComponent(mg.name)}/delete`, { hard: true }) }
+    function mgRestore()    { mgPost(`/api/dataframes/${encodeURIComponent(mg.name)}/restore`, {}) }
+
+    onMounted(mgLoad)
+
+    return { tab, br, brFetch, brSelect, brShape, brDate, fmtDatetime, sv, svSave, sr, srSearch, mg, mgLoad, mgSoftDelete, mgHardDelete, mgRestore }
+  }
+}).mount('#app')
+</script>
+</body>
+</html>

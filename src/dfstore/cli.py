@@ -137,7 +137,7 @@ def list_cmd(
     store_path: Annotated[Optional[Path], _STORE_OPT] = None,
 ) -> None:
     """List all stored DataFrames."""
-    records = dfstore.list(include_deleted=include_deleted, store_path=store_path)
+    records = dfstore.list(include_deleted=include_deleted, store_path=store_path, format="raw")
     if not records:
         console.print("No DataFrames stored yet.")
         return
@@ -153,7 +153,7 @@ def info(
 ) -> None:
     """Show full metadata for a DataFrame."""
     try:
-        r = dfstore.info(name, store_path=store_path)
+        r = dfstore.info(name, store_path=store_path, format="raw")
     except DFNotFoundError as e:
         err_console.print(str(e))
         raise typer.Exit(1)
@@ -198,6 +198,7 @@ def search(
             tags=tag_list,
             columns=columns or None,
             store_path=store_path,
+            format="raw",
         )
     except ValueError as e:
         err_console.print(str(e))
@@ -218,7 +219,7 @@ def versions(
 ) -> None:
     """Show version history for a DataFrame."""
     try:
-        vrs = dfstore.versions(name, store_path=store_path)
+        vrs = dfstore.versions(name, store_path=store_path, format="raw")
     except DFNotFoundError as e:
         err_console.print(str(e))
         raise typer.Exit(1)
@@ -310,5 +311,5 @@ def serve(
 
     console.print(f"dfstore UI running at http://{host}:{port}")
     resolved = store_path or Path(os.environ.get("DFSTORE_PATH", Path.home() / ".dfstore"))
-    demo = create_app(store_path=resolved)
-    demo.launch(server_name=host, server_port=port)
+    flask_app = create_app(store_path=resolved)
+    flask_app.run(host=host, port=port, debug=False)

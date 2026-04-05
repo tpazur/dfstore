@@ -10,14 +10,14 @@ from dfstore.exceptions import DFNotFoundError, DFStoreError
 
 def test_soft_delete_sets_deleted_flag_true(saved_employees):
     dfstore.delete("employees", store_path=saved_employees)
-    r = dfstore.info("employees", store_path=saved_employees)
+    r = dfstore.info("employees", store_path=saved_employees, format="raw")
     assert r.deleted is True
 
 
 def test_soft_delete_hides_from_list(saved_employees):
     dfstore.delete("employees", store_path=saved_employees)
     result = dfstore.list(store_path=saved_employees)
-    assert result == []
+    assert len(result) == 0
 
 
 def test_soft_delete_already_deleted_raises_df_store_error(saved_employees):
@@ -29,7 +29,7 @@ def test_soft_delete_already_deleted_raises_df_store_error(saved_employees):
 def test_hard_delete_removes_from_index(saved_employees):
     dfstore.delete("employees", hard=True, store_path=saved_employees)
     result = dfstore.list(include_deleted=True, store_path=saved_employees)
-    assert result == []
+    assert len(result) == 0
 
 
 def test_hard_delete_removes_parquet_directory(saved_employees):
@@ -41,13 +41,13 @@ def test_hard_delete_removes_parquet_directory(saved_employees):
 
 def test_hard_delete_not_in_list_include_deleted(saved_employees):
     dfstore.delete("employees", hard=True, store_path=saved_employees)
-    assert dfstore.list(include_deleted=True, store_path=saved_employees) == []
+    assert len(dfstore.list(include_deleted=True, store_path=saved_employees)) == 0
 
 
 def test_restore_after_soft_delete_makes_active(saved_employees):
     dfstore.delete("employees", store_path=saved_employees)
     dfstore.restore("employees", store_path=saved_employees)
-    r = dfstore.info("employees", store_path=saved_employees)
+    r = dfstore.info("employees", store_path=saved_employees, format="raw")
     assert r.deleted is False
     result = dfstore.list(store_path=saved_employees)
     assert len(result) == 1

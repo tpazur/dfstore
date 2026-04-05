@@ -170,23 +170,36 @@ class DFStore:
 
     # ── list ──────────────────────────────────────────────────────────────────
 
-    def list(self, include_deleted: bool = False) -> builtins.list[DFRecord]:
+    def list(
+        self,
+        include_deleted: bool = False,
+        format: Literal["pd", "raw"] = "pd",
+    ) -> builtins.list[DFRecord] | pd.DataFrame:
         records = self._index.load()
         result = [
             r for r in records.values()
             if include_deleted or not r.deleted
         ]
         result.sort(key=lambda r: r.updated_at, reverse=True)
-        return result
+        if format == "raw":
+            return result
+        return _records_to_df(result)
 
     # ── info ──────────────────────────────────────────────────────────────────
 
-    def info(self, name: str) -> DFRecord:
+    def info(
+        self,
+        name: str,
+        format: Literal["pd", "raw"] = "pd",
+    ) -> DFRecord | pd.DataFrame:
         _validate_name(name)
         records = self._index.load()
         if name not in records:
             raise DFNotFoundError(f"'{name}' not found in the store.")
-        return records[name]
+        record = records[name]
+        if format == "raw":
+            return record
+        return _records_to_df([record])
 
     # ── search ────────────────────────────────────────────────────────────────
 
@@ -195,11 +208,12 @@ class DFStore:
         description: str | None = None,
         tags: builtins.list[str | dict[str, str]] | None = None,
         columns: builtins.list[str] | None = None,
-    ) -> builtins.list[DFRecord]:
+        format: Literal["pd", "raw"] = "pd",
+    ) -> builtins.list[DFRecord] | pd.DataFrame:
         if description is None and tags is None and columns is None:
             raise ValueError("At least one search criterion must be provided.")
 
-        results = self.list()
+        results = self.list(format="raw")
 
         if description is not None:
             q = description.lower()
@@ -211,16 +225,25 @@ class DFStore:
         if columns is not None:
             results = [r for r in results if _columns_match(r, columns)]
 
-        return results
+        if format == "raw":
+            return results
+        return _records_to_df(results)
 
     # ── versions ──────────────────────────────────────────────────────────────
 
-    def versions(self, name: str) -> builtins.list[VersionRecord]:
+    def versions(
+        self,
+        name: str,
+        format: Literal["pd", "raw"] = "pd",
+    ) -> builtins.list[VersionRecord] | pd.DataFrame:
         _validate_name(name)
         records = self._index.load()
         if name not in records:
             raise DFNotFoundError(f"'{name}' not found in the store.")
-        return builtins.list(sorted(records[name].versions, key=lambda v: v.version))
+        vrs = builtins.list(sorted(records[name].versions, key=lambda v: v.version))
+        if format == "raw":
+            return vrs
+        return _versions_to_df(vrs)
 
     # ── delete ────────────────────────────────────────────────────────────────
 
@@ -242,6 +265,51 @@ class DFStore:
                 raise DFStoreError(f"'{name}' is already deleted.")
             records[name].deleted = True
             self._index.save(records)
+
+    # ── preview ───────────────────────────────────────────────────────────────
+
+    def preview(self, name: str, n: int = 5, version: int | None = None) -> dict:
+        """Return the first *n* rows of a stored DataFrame without loading it fully.
+
+        Uses ``pyarrow.parquet.ParquetFile.iter_batches`` so only the first
+        row-group batch is decoded — the rest of the file is never touched.
+        """
+        import pyarrow.parquet as pq
+
+        _validate_name(name)
+        records = self._index.load()
+        if name not in records or records[name].deleted:
+            raise DFNotFoundError(f"'{name}' not found in the store.")
+
+        record = records[name]
+        if version is None:
+            version = record.current_version
+        if version < 1 or version > record.current_version:
+            raise ValueError(
+                f"Version {version} out of range for '{name}' (1–{record.current_version})."
+            )
+
+        path = self._store_path / record.versions[version - 1].parquet_file
+        pf = pq.ParquetFile(path)
+        batch = next(pf.iter_batches(batch_size=n))
+        columns = batch.schema.names
+        rows_dict = batch.to_pydict()
+
+        def _safe(v):
+            if v is None:
+                return None
+            if isinstance(v, float) and (v != v):  # NaN
+                return None
+            try:
+                return v if isinstance(v, (bool, int, float, str)) else str(v)
+            except Exception:
+                return str(v)
+
+        rows = [
+            [_safe(rows_dict[col][i]) for col in columns]
+            for i in range(min(n, len(rows_dict[columns[0]])))
+        ]
+        return {"columns": columns, "rows": rows}
 
     # ── restore ───────────────────────────────────────────────────────────────
 
@@ -280,3 +348,38 @@ def _columns_match(record: DFRecord, columns: builtins.list[str]) -> bool:
     current_version = record.versions[record.current_version - 1]
     current_cols = builtins.set(current_version.columns)
     return all(c in current_cols for c in columns)
+
+
+def _records_to_df(records: builtins.list[DFRecord]) -> pd.DataFrame:
+    rows = [
+        {
+            "name": r.name,
+            "description": r.description,
+            "tags": r.tags,
+            "created_at": r.created_at,
+            "updated_at": r.updated_at,
+            "current_version": r.current_version,
+            "deleted": r.deleted,
+        }
+        for r in records
+    ]
+    return pd.DataFrame(rows, columns=["name", "description", "tags", "created_at", "updated_at", "current_version", "deleted"])
+
+
+def _versions_to_df(versions: builtins.list[VersionRecord]) -> pd.DataFrame:
+    rows = [
+        {
+            "version": v.version,
+            "saved_at": v.saved_at,
+            "notes": v.notes,
+            "shape": v.shape,
+            "columns": v.columns,
+            "library": v.library,
+            "shape_diff": v.shape_diff,
+            "columns_added": v.columns_added,
+            "columns_removed": v.columns_removed,
+            "row_diff": v.row_diff,
+        }
+        for v in versions
+    ]
+    return pd.DataFrame(rows, columns=["version", "saved_at", "notes", "shape", "columns", "library", "shape_diff", "columns_added", "columns_removed", "row_diff"])

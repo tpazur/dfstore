@@ -29,7 +29,7 @@ def test_save_returns_version_record(store, employees_df):
 def test_save_creates_index_entry(store, employees_df):
     dfstore.save(employees_df, name="employees", store_path=store)
     assert (store / "index.json").exists()
-    record = dfstore.info("employees", store_path=store)
+    record = dfstore.info("employees", store_path=store, format="raw")
     assert record.name == "employees"
 
 
@@ -91,21 +91,21 @@ def test_save_on_soft_deleted_raises_df_store_error(store, employees_df):
 def test_save_preserves_description_on_resave(store, employees_df):
     dfstore.save(employees_df, name="employees", description="Original", store_path=store)
     dfstore.save(employees_df, name="employees", description="", store_path=store)
-    record = dfstore.info("employees", store_path=store)
+    record = dfstore.info("employees", store_path=store, format="raw")
     assert record.description == "Original"
 
 
 def test_save_updates_description_on_resave(store, employees_df):
     dfstore.save(employees_df, name="employees", description="Original", store_path=store)
     dfstore.save(employees_df, name="employees", description="Updated", store_path=store)
-    record = dfstore.info("employees", store_path=store)
+    record = dfstore.info("employees", store_path=store, format="raw")
     assert record.description == "Updated"
 
 
 def test_save_updates_tags_on_resave(store, employees_df):
     dfstore.save(employees_df, name="employees", tags=["old"], store_path=store)
     dfstore.save(employees_df, name="employees", tags=["new"], store_path=store)
-    record = dfstore.info("employees", store_path=store)
+    record = dfstore.info("employees", store_path=store, format="raw")
     assert record.tags == ["new"]
 
 

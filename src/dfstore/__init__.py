@@ -20,6 +20,7 @@ __all__ = [
     "info",
     "search",
     "versions",
+    "preview",
     "delete",
     "restore",
     "DFStore",
@@ -67,17 +68,19 @@ def get(
 def list(  # noqa: A001
     include_deleted: bool = False,
     store_path: str | Path | None = None,
-) -> builtins.list[DFRecord]:
+    format: Literal["pd", "raw"] = "pd",
+) -> builtins.list[DFRecord] | pd.DataFrame:
     """List all DataFrames in the store."""
-    return DFStore(_resolve_path(store_path)).list(include_deleted=include_deleted)
+    return DFStore(_resolve_path(store_path)).list(include_deleted=include_deleted, format=format)
 
 
 def info(
     name: str,
     store_path: str | Path | None = None,
-) -> DFRecord:
+    format: Literal["pd", "raw"] = "pd",
+) -> DFRecord | pd.DataFrame:
     """Return full metadata for a named DataFrame."""
-    return DFStore(_resolve_path(store_path)).info(name)
+    return DFStore(_resolve_path(store_path)).info(name, format=format)
 
 
 def search(
@@ -85,19 +88,31 @@ def search(
     tags: builtins.list[str | dict[str, str]] | None = None,
     columns: builtins.list[str] | None = None,
     store_path: str | Path | None = None,
-) -> builtins.list[DFRecord]:
+    format: Literal["pd", "raw"] = "pd",
+) -> builtins.list[DFRecord] | pd.DataFrame:
     """Search DataFrames by description, tags, or columns."""
     return DFStore(_resolve_path(store_path)).search(
-        description=description, tags=tags, columns=columns
+        description=description, tags=tags, columns=columns, format=format
     )
 
 
 def versions(
     name: str,
     store_path: str | Path | None = None,
-) -> builtins.list[VersionRecord]:
+    format: Literal["pd", "raw"] = "pd",
+) -> builtins.list[VersionRecord] | pd.DataFrame:
     """Return the version history for a named DataFrame."""
-    return DFStore(_resolve_path(store_path)).versions(name)
+    return DFStore(_resolve_path(store_path)).versions(name, format=format)
+
+
+def preview(
+    name: str,
+    n: int = 5,
+    version: int | None = None,
+    store_path: str | Path | None = None,
+) -> dict:
+    """Return the first *n* rows of a stored DataFrame as a plain dict."""
+    return DFStore(_resolve_path(store_path)).preview(name, n=n, version=version)
 
 
 def delete(
