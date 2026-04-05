@@ -478,7 +478,8 @@ def _records_to_df(records: builtins.list[DFRecord]) -> pd.DataFrame:
         }
         for r in records
     ]
-    return pd.DataFrame(rows, columns=["name", "description", "tags", "created_at", "updated_at", "current_version", "deleted"])
+    cols = ["name", "description", "tags", "created_at", "updated_at", "current_version", "deleted"]
+    return pd.DataFrame(rows, columns=cols)
 
 
 def _versions_to_df(versions: builtins.list[VersionRecord]) -> pd.DataFrame:
@@ -498,4 +499,8 @@ def _versions_to_df(versions: builtins.list[VersionRecord]) -> pd.DataFrame:
         }
         for v in versions
     ]
-    return pd.DataFrame(rows, columns=["version", "saved_at", "notes", "shape", "columns", "library", "shape_diff", "columns_added", "columns_removed", "row_diff"])
+    cols = [
+        "version", "saved_at", "notes", "shape", "columns", "library",
+        "shape_diff", "columns_added", "columns_removed", "row_diff",
+    ]
+    return pd.DataFrame(rows, columns=cols)

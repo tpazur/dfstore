@@ -69,10 +69,17 @@ def _records_table(records: list, title: str = "") -> Table:
 
 @app.command()
 def save(
-    file: Annotated[Path, typer.Argument(help="Parquet or CSV file to save. Use '-' for stdin parquet.")],
+    file: Annotated[
+        Path, typer.Argument(help="Parquet or CSV file to save. Use '-' for stdin parquet.")
+    ],
     name: Annotated[str, typer.Option("--name", "-n", help="DataFrame name (required).")],
     description: Annotated[str, typer.Option("--description", "-d", help="Description.")] = "",
-    tags: Annotated[Optional[list[str]], typer.Option("--tags", "-t", help="Tag (repeat for multiple). Use key=value for dict tags.")] = None,
+    tags: Annotated[
+        Optional[list[str]],
+        typer.Option(
+            "--tags", "-t", help="Tag (repeat for multiple). Use key=value for dict tags."
+        ),
+    ] = None,
     notes: Annotated[str, typer.Option("--notes", help="Version notes.")] = "",
     store_path: Annotated[Optional[Path], _STORE_OPT] = None,
 ) -> None:
@@ -100,9 +107,15 @@ def save(
 @app.command()
 def get(
     name: Annotated[str, typer.Argument(help="DataFrame name.")],
-    version: Annotated[Optional[int], typer.Option("--version", "-v", help="Specific version.")] = None,
-    output: Annotated[Optional[Path], typer.Option("--output", "-o", help="Output file path.")] = None,
-    fmt: Annotated[str, typer.Option("--format", "-f", help="Output format: csv, parquet, json.")] = "csv",
+    version: Annotated[
+        Optional[int], typer.Option("--version", "-v", help="Specific version.")
+    ] = None,
+    output: Annotated[
+        Optional[Path], typer.Option("--output", "-o", help="Output file path.")
+    ] = None,
+    fmt: Annotated[
+        str, typer.Option("--format", "-f", help="Output format: csv, parquet, json.")
+    ] = "csv",
     store_path: Annotated[Optional[Path], _STORE_OPT] = None,
 ) -> None:
     """Retrieve a DataFrame from the store."""
@@ -133,7 +146,9 @@ def get(
 
 @app.command(name="list")
 def list_cmd(
-    include_deleted: Annotated[bool, typer.Option("--include-deleted", help="Include soft-deleted items.")] = False,
+    include_deleted: Annotated[
+        bool, typer.Option("--include-deleted", help="Include soft-deleted items.")
+    ] = False,
     store_path: Annotated[Optional[Path], _STORE_OPT] = None,
 ) -> None:
     """List all stored DataFrames."""
@@ -181,9 +196,16 @@ def info(
 
 @app.command()
 def search(
-    description: Annotated[Optional[str], typer.Option("--description", "-d", help="Description substring.")] = None,
-    tags: Annotated[Optional[list[str]], typer.Option("--tags", "-t", help="Tag filter (repeat for multiple).")] = None,
-    columns: Annotated[Optional[list[str]], typer.Option("--columns", "-c", help="Column name filter (repeat for multiple).")] = None,
+    description: Annotated[
+        Optional[str], typer.Option("--description", "-d", help="Description substring.")
+    ] = None,
+    tags: Annotated[
+        Optional[list[str]], typer.Option("--tags", "-t", help="Tag filter (repeat for multiple).")
+    ] = None,
+    columns: Annotated[
+        Optional[list[str]],
+        typer.Option("--columns", "-c", help="Column name filter (repeat for multiple)."),
+    ] = None,
     store_path: Annotated[Optional[Path], _STORE_OPT] = None,
 ) -> None:
     """Search DataFrames by description, tags, or columns."""
@@ -251,7 +273,9 @@ def versions(
 @app.command()
 def delete(
     name: Annotated[str, typer.Argument(help="DataFrame name.")],
-    hard: Annotated[bool, typer.Option("--hard", help="Permanently delete data and metadata.")] = False,
+    hard: Annotated[
+        bool, typer.Option("--hard", help="Permanently delete data and metadata.")
+    ] = False,
     store_path: Annotated[Optional[Path], _STORE_OPT] = None,
 ) -> None:
     """Delete a DataFrame (soft by default)."""

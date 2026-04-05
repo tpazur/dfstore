@@ -110,7 +110,9 @@ def create_app(store_path: Path | None = None) -> Flask:
         include_deleted = request.args.get("include_deleted", "false").lower() == "true"
         q = request.args.get("q", "").strip().lower()
         try:
-            records = dfstore.list(include_deleted=include_deleted, store_path=store_path, format="raw")
+            records = dfstore.list(
+                include_deleted=include_deleted, store_path=store_path, format="raw"
+            )
         except Exception as e:
             return _api_error(str(e), 500)
         if q:
@@ -191,7 +193,10 @@ def create_app(store_path: Path | None = None) -> Flask:
             "version": vr.version,
             "shape": list(vr.shape),
             "saved_at": vr.saved_at.isoformat(),
-            "message": f"Saved '{name}' version {vr.version} ({vr.shape[0]} rows × {vr.shape[1]} cols)",
+            "message": (
+                f"Saved '{name}' version {vr.version} "
+                f"({vr.shape[0]} rows × {vr.shape[1]} cols)"
+            ),
         }), 201
 
     # ── POST /api/dataframes/<name>/delete ────────────────────────────────────

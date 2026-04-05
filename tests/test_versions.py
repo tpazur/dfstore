@@ -12,7 +12,11 @@ from dfstore.models import VersionRecord
 def test_versions_returns_dataframe_by_default(saved_employees):
     vrs = dfstore.versions("employees", store_path=saved_employees)
     assert isinstance(vrs, pd.DataFrame)
-    assert list(vrs.columns) == ["version", "saved_at", "notes", "shape", "columns", "library", "shape_diff", "columns_added", "columns_removed", "row_diff"]
+    expected_cols = [
+        "version", "saved_at", "notes", "shape", "columns", "library",
+        "shape_diff", "columns_added", "columns_removed", "row_diff",
+    ]
+    assert list(vrs.columns) == expected_cols
     assert len(vrs) == 1
     assert vrs.iloc[0]["version"] == 1
 

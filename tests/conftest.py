@@ -1,9 +1,9 @@
 """Shared fixtures for dfstore tests."""
 from __future__ import annotations
 
-import pytest
 import pandas as pd
 import polars as pl
+import pytest
 
 import dfstore
 

@@ -12,7 +12,10 @@ from dfstore.models import DFRecord
 def test_info_returns_dataframe_by_default(saved_employees):
     r = dfstore.info("employees", store_path=saved_employees)
     assert isinstance(r, pd.DataFrame)
-    assert list(r.columns) == ["name", "description", "tags", "created_at", "updated_at", "current_version", "deleted"]
+    expected_cols = [
+        "name", "description", "tags", "created_at", "updated_at", "current_version", "deleted"
+    ]
+    assert list(r.columns) == expected_cols
     assert len(r) == 1
     assert r.iloc[0]["name"] == "employees"
     assert r.iloc[0]["description"] == "Employee roster"

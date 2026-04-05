@@ -3,10 +3,8 @@ from __future__ import annotations
 
 import pandas as pd
 import pytest
-import polars as pl
 
 import dfstore
-from dfstore.exceptions import DFNotFoundError
 
 
 @pytest.fixture
@@ -21,7 +19,10 @@ def dual_store(store, employees_df, products_pl):
 def test_search_returns_dataframe_by_default(dual_store):
     results = dfstore.search(description="catalog", store_path=dual_store)
     assert isinstance(results, pd.DataFrame)
-    assert list(results.columns) == ["name", "description", "tags", "created_at", "updated_at", "current_version", "deleted"]
+    expected_cols = [
+        "name", "description", "tags", "created_at", "updated_at", "current_version", "deleted"
+    ]
+    assert list(results.columns) == expected_cols
 
 
 def test_search_by_description_substring(dual_store):

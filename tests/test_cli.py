@@ -1,10 +1,6 @@
 """CLI integration tests using typer.testing.CliRunner."""
 from __future__ import annotations
 
-import json
-import os
-
-import pandas as pd
 import pytest
 from typer.testing import CliRunner
 
@@ -61,7 +57,7 @@ def test_cli_get_stdout_is_valid_csv(store_env, employees_df):
     dfstore.save(employees_df, name="employees", store_path=store_env)
     result = runner.invoke(app, ["get", "employees", "--format", "csv"])
     assert result.exit_code == 0
-    lines = [l for l in result.output.strip().splitlines() if l]
+    lines = [line for line in result.output.strip().splitlines() if line]
     assert len(lines) >= 2  # header + at least one data row
     assert "name" in lines[0].lower() or "age" in lines[0].lower()
 

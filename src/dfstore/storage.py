@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pandas as pd
 import polars as pl
-import pyarrow.parquet as pq
 
 
 def write_parquet(df: pd.DataFrame | pl.DataFrame, path: Path) -> None:

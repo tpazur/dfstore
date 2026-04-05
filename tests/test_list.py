@@ -4,7 +4,6 @@ from __future__ import annotations
 import time
 
 import pandas as pd
-import pytest
 
 import dfstore
 from dfstore.models import DFRecord
@@ -14,7 +13,10 @@ def test_list_empty_store_returns_empty_dataframe(store):
     result = dfstore.list(store_path=store)
     assert isinstance(result, pd.DataFrame)
     assert len(result) == 0
-    assert list(result.columns) == ["name", "description", "tags", "created_at", "updated_at", "current_version", "deleted"]
+    expected_cols = [
+        "name", "description", "tags", "created_at", "updated_at", "current_version", "deleted"
+    ]
+    assert list(result.columns) == expected_cols
 
 
 def test_list_raw_empty_store_returns_empty_list(store):
@@ -53,7 +55,7 @@ def test_list_include_deleted_returns_soft_deleted(store, employees_df):
 
 def test_list_sorted_by_updated_at_descending(store, employees_df):
     dfstore.save(employees_df, name="aaa", store_path=store)
-    import time; time.sleep(0.05)
+    time.sleep(0.05)
     dfstore.save(employees_df, name="zzz", store_path=store)
     result = dfstore.list(store_path=store)
     assert result.iloc[0]["name"] == "zzz"
