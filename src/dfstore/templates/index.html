@@ -191,7 +191,7 @@
 
     input::placeholder { color: var(--text-subtle); }
 
-    .row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+    .row { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
     .row .form-group { flex: 1; min-width: 160px; }
 
     /* ── File drop zone ── */
@@ -243,7 +243,7 @@
     /* ── Toolbar row above tables ── */
     .toolbar {
       display: flex;
-      align-items: flex-end;
+      align-items: flex-start;
       gap: 10px;
       margin-bottom: 14px;
       flex-wrap: wrap;
@@ -453,8 +453,7 @@
   <header class="top-bar">
     <div class="top-bar-inner">
       <div class="logo">
-        <div class="logo-icon">df</div>
-        dfstore
+        <div class="logo-icon">df</div>store
       </div>
       <nav class="nav">
         <button class="nav-btn" :class="{active: tab==='browse'}" @click="tab='browse'">Browse</button>
@@ -598,7 +597,7 @@
 
     <!-- ── Save ── -->
     <div v-show="tab==='save'">
-      <div class="card" style="max-width:560px">
+      <div class="card" style="">
         <div class="card-header">
           <span class="card-title">Save DataFrame</span>
         </div>
@@ -708,7 +707,7 @@
 
     <!-- ── Manage ── -->
     <div v-show="tab==='manage'">
-      <div class="card" style="max-width:560px">
+      <div class="card" style="">
         <div class="card-header">
           <span class="card-title">Manage DataFrame</span>
           <button class="btn btn-ghost" @click="mgLoad" :disabled="mg.loading">
