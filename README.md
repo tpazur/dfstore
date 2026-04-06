@@ -79,6 +79,28 @@ Four tabs: **Browse** (filter, click a row to see version history and a data pre
 - **Zero Infrastructure** — plain files on disk (`~/.dfstore`), no database
 - **Soft delete** — hides a DataFrame without removing data; restore at any time
 
+## Compatibility
+
+All combinations below are tested in CI. `✓` = passing, `—` = not tested.
+
+**pandas**
+
+| pandas \ Python | 3.10 | 3.11 | 3.12 | 3.13 |
+|-----------------|:----:|:----:|:----:|:----:|
+| 2.0             | ✓    | ✓    | —    | —    |
+| 2.1             | ✓    | ✓    | ✓    | —    |
+| 2.2             | ✓    | ✓    | ✓    | ✓    |
+| 2.3             | ✓    | ✓    | ✓    | ✓    |
+| 3.0             | —    | ✓    | ✓    | ✓    |
+
+**polars**
+
+| polars \ Python | 3.10 | 3.11 | 3.12 | 3.13 |
+|-----------------|:----:|:----:|:----:|:----:|
+| 0.20            | ✓    | ✓    | ✓    | ✓    |
+| 1.0             | ✓    | ✓    | ✓    | ✓    |
+| 1.20            | ✓    | ✓    | ✓    | ✓    |
+
 ## Support
 
 I'm building dfstore with passion in my free time. If it helps you and your team on your daily data science tasks, please consider supporting the project. Your contribution will help me dedicate more time to improving dfstore and adding new features.
